@@ -1,0 +1,17 @@
+{
+  "name": "simple-express-app-without-db",
+  "version": "1.0.0",
+  "description": "this is for practicing ",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "author": "abdullah al rafi",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.0.1"
+  }
+}

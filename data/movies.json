@@ -1,0 +1,51 @@
+[
+  {
+    "id": 1,
+    "name": "test 1",
+    "releaseYear": 2012,
+    "duration": 100,
+    "rating": 3.4
+  },
+  {
+    "id": 2,
+    "name": "test 2",
+    "releaseYear": 5012,
+    "duration": 160,
+    "rating": 3.4
+  },
+  {
+    "id": 3,
+    "name": "test 3",
+    "releaseYear": 2512,
+    "duration": 190,
+    "rating": 7.4
+  },
+  {
+    "id": 4,
+    "name": "test 4",
+    "releaseYear": 2015,
+    "duration": 106,
+    "rating": 8.9
+  },
+  {
+    "id": 6,
+    "name": "test 5",
+    "releaseYear": 2012,
+    "duration": 100,
+    "rating": 3.4
+  },
+  {
+    "id": 7,
+    "name": "test 9",
+    "releaseYear": 20020,
+    "duration": 100,
+    "rating": 3.4
+  },
+  {
+    "id": 8,
+    "name": "test 10",
+    "releaseYear": 2012,
+    "duration": 100,
+    "rating": 3.4
+  }
+]
