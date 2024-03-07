@@ -114,7 +114,7 @@ module.exports.getMovieStats = async (req, res) => {
         moviCount: {$sum: 1}
       }},
       {$sort: {minPrice: 1}},
-      {$match: {maxPrice: {$gte: 60}}}
+      // {$match: {maxPrice: {$gte: 60}}}
     ])
 
     res.status(200).json({
