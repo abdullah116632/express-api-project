@@ -8,7 +8,7 @@ const movieSchema = mongoose.Schema({
         required: [true, "Name field is required"],
         unique: true,
         trim: true,
-        validate: [validator.isAlpha, "name should only contain alphabets"]
+        // validate: [validator.isAlpha, "name should only contain alphabets"]
     },
     description: {
         type: String,
