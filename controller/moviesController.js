@@ -1,7 +1,8 @@
 const Movie = require("../Models/movieModels");
 const CustomError = require("../Utils/CustomError");
 const ApiFeatures = require("./../Utils/ApiFeatures");
-const asyncErrorHandler = require("./../Utils/asyncErrorHandler")
+const asyncErrorHandler = require("./../Utils/asyncErrorHandler");
+
 
 
 module.exports.getHighestRated = (req, res, next) => {
@@ -27,15 +28,21 @@ module.exports.getAllMovies = asyncErrorHandler( async (req, res, next) => {
 })
 
 module.exports.getMovie = asyncErrorHandler( async (req, res, next) => {
-
-    const movie = await Movie.findById(req.params.id)
-
-    res.status(200).json({
-      status: "success",
-      data: {
-        movie
-      }
-    })
+  console.log("test")
+  console.log(process.env)
+  
+  const movie = await Movie.findById(req.params.id)
+  
+  if(!movie){
+    const error = new CustomError("Movie with that id is not found!", 404);
+    return next(error);
+  }
+  res.status(200).json({
+    status: "success",
+    data: {
+      movie
+    }
+  })
 })
 
 module.exports.createMovie = asyncErrorHandler( async (req, res, next) => {
@@ -53,6 +60,11 @@ module.exports.updateMovie = asyncErrorHandler(async (req, res, next) => {
 
     const updatedMovie = await Movie.findByIdAndUpdate(req.params.id, req.body, {new: true, runValidator: true})
 
+    if(!updatedMovie){
+      const error = new CustomError("Movie with that id is not found!", 404);
+      return next(error);
+    }
+
     res.status(200).json({
       status: "success",
       data: {
@@ -62,7 +74,12 @@ module.exports.updateMovie = asyncErrorHandler(async (req, res, next) => {
 })
 
 module.exports.deleteMovie = asyncErrorHandler(async(req, res, next) => {
-    await Movie.findByIdAndDelete(req.params.id);
+    const deletedMovie = await Movie.findByIdAndDelete(req.params.id);
+
+    if(!deletedMovie){
+      const error = new CustomError("Movie with that id is not found!", 404);
+      return next(error);
+    }
 
     res.status(204).json({
       status: "success",
@@ -122,3 +139,24 @@ module.exports.getMovieByGenres = asyncErrorHandler(async (req, res, next) => {
       }
     })
 })
+
+module.exports.getmo = async (req, res, next) => {
+    try{
+  const movie = await Movie.findById(req.params.id)
+  console.log("test")
+  if(!movie){
+    const error = new CustomError("Movie with that id is not found!", 404);
+    return next(error);
+  }
+  res.status(200).json({
+    status: "success",
+    data: {
+      movie
+    }
+  })
+}catch(err){
+  res.status(404).json({
+    status: "fail"
+  })
+}
+}
