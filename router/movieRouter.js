@@ -1,5 +1,6 @@
 const express = require("express");
 const moviesController = require("./../controller/moviesController");
+const authContoller = require("./../controller/authController")
 
 const router = express.Router();
 
@@ -10,13 +11,13 @@ router.route("/movie-by-genre/:genre").get(moviesController.getMovieByGenres)
 
 router
   .route("/")
-  .get(moviesController.getAllMovies)
+  .get(authContoller.protect, moviesController.getAllMovies)
   .post(moviesController.createMovie);
 
 router
   .route("/:id")
-  .get(moviesController.getMovie)
+  .get(authContoller.protect, moviesController.getMovie)
   .patch(moviesController.updateMovie)
-  .delete(moviesController.deleteMovie);
+  .delete(authContoller.protect, authContoller.restrict("admin"), moviesController.deleteMovie);
 
 module.exports = router;
