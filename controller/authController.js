@@ -3,6 +3,8 @@ const CustomError = require("../Utils/CustomError");
 const User = require("./../Models/userModel");
 const asyncErrorHandler = require("./../Utils/asyncErrorHandler")
 const jwt = require("jsonwebtoken");
+const sendEmail = require("./../Utils/email")
+const crypto = require("crypto");
 // const util = require("util")
 
 
@@ -14,18 +16,22 @@ const signToken = (id) => {
     return token;
 }
 
-module.exports.signup = asyncErrorHandler( async (req, res, next) => {
-    const newUser = await User.create(req.body)
+const createSendResponse = (user, statusCode, res) => {
+    const token = signToken(user._id)
 
-    const token = signToken(newUser._id)
-
-    res.status(201).json({
+    res.status(statusCode).json({
         status: "success",
         token,
         data: {
-            user: newUser
+            user
         }
     })
+}
+
+module.exports.signup = asyncErrorHandler( async (req, res, next) => {
+    const newUser = await User.create(req.body)
+
+    createSendResponse(newUser, 201, res);
 })
 
 module.exports.login = asyncErrorHandler( async (req, res, next) => {
@@ -46,12 +52,7 @@ module.exports.login = asyncErrorHandler( async (req, res, next) => {
         return next(error)
     }
 
-    const token = signToken(user._id);
-
-    res.status(200).json({
-        status: "success",
-        token,
-    })
+    createSendResponse(user, 200, res);
 })
 
 
@@ -104,6 +105,86 @@ module.exports.restrict = (role) => {
     }
 }
 
+module.exports.forgotPassword = asyncErrorHandler( async (req, res, next) => {
+    // 1 get the user based on posted email
+    const user = await User.findOne({email: req.body.email})
+
+    if(!user){
+        const err = new CustomError("We could not find the user with given email", 404)
+        next(err);
+    }
+
+    // create a random reset token
+    const resetToken = user.createResetPasswordToken();
+
+    await user.save({validateBeforeSave: false})
+
+    // send the token back to the user email
+    const resetUrl = `${req.protocol}://${req.get("host")}/api/v1/users/resetPassword/${resetToken}`
+    const message = `We have received a password reset request. Please use the below link to reset your password\n\n${resetUrl}\n\nThis reset password link will be valid only for 10 minutes.`;
+    try{
+        
+        await sendEmail({
+            email: user.email,
+            subject: "Password change request received",
+            message: message
+        })
+
+        res.status(200).json({
+            status: "success",
+            message: "password reset link send to the user email"
+        })
+    }catch(err){
+        user.passwordResetToken = undefined;
+        user.passwordResetTokenExpires = undefined;
+
+        await user.save({validateBeforeSave: false});
+
+        return next(new CustomError(err.message, 500))
+    }
+})
+
+module.exports.resetPassword = asyncErrorHandler( async (req, res, next) => {
+
+
+    const randomToken = crypto.createHash("sha256").update(req.params.token).digest("hex")
+    console.log(randomToken)
+    const user = await User.findOne({passwordResetToken: randomToken, passwordResetTokenExpires: {$gt: Date.now()}});
+    console.log(user);
+
+    if(!user){
+        const error = new CustomError("Token is invalid or has expired!", 400);
+        next(error);
+    }
+
+    user.password = req.body.password;
+    user.confirmPassword = req.body.confirmPassword;
+    user.passwordChangedAt = Date.now();
+    user.passwordResetToken = undefined;
+    user.passwordResetTokenExpires = undefined;
+
+    await user.save();
+
+    createSendResponse(user, 200, res);
+})
+
+module.exports.updatePassword = asyncErrorHandler( async (req, res, next) => {
+    //get current user data from database
+    const user = await User.findById(req.user._id).select("+password");
+
+    //check if the supplied current password is correct
+    if(!(await user.comparePasswordInDb(req.body.currentPassword, user.password))){
+        return next(new CustomError("The current password you provided is wrong", 401));
+    }
+
+    // If supplied password is correct, update user password with new value
+    user.password = req.body.password;
+    user.confirmPassword = req.body.confirmPassword;
+    await user.save()
+
+    // login user & send JWT
+    createSendResponse(user, 200, res)
+})
 
 
 
