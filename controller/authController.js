@@ -1,4 +1,3 @@
-const { error } = require("console");
 const CustomError = require("../Utils/CustomError");
 const User = require("./../Models/userModel");
 const asyncErrorHandler = require("./../Utils/asyncErrorHandler")
@@ -18,6 +17,19 @@ const signToken = (id) => {
 
 const createSendResponse = (user, statusCode, res) => {
     const token = signToken(user._id)
+
+    const options = {
+        expiresIn: process.env.LOGIN_EXPIRES,
+        httpOnly: true
+    }
+
+    if(process.env.NODE_ENV === "production"){
+        options.secure = true;
+    }
+
+    res.cookie("jwt", token, options)
+
+    user.password = undefined;
 
     res.status(statusCode).json({
         status: "success",
@@ -54,7 +66,6 @@ module.exports.login = asyncErrorHandler( async (req, res, next) => {
 
     createSendResponse(user, 200, res);
 })
-
 
 module.exports.protect = asyncErrorHandler( async (req, res, next) => {
     //1 read the token and check if it exist
@@ -146,11 +157,10 @@ module.exports.forgotPassword = asyncErrorHandler( async (req, res, next) => {
 
 module.exports.resetPassword = asyncErrorHandler( async (req, res, next) => {
 
-
     const randomToken = crypto.createHash("sha256").update(req.params.token).digest("hex")
-    console.log(randomToken)
+
     const user = await User.findOne({passwordResetToken: randomToken, passwordResetTokenExpires: {$gt: Date.now()}});
-    console.log(user);
+
 
     if(!user){
         const error = new CustomError("Token is invalid or has expired!", 400);
@@ -167,25 +177,3 @@ module.exports.resetPassword = asyncErrorHandler( async (req, res, next) => {
 
     createSendResponse(user, 200, res);
 })
-
-module.exports.updatePassword = asyncErrorHandler( async (req, res, next) => {
-    //get current user data from database
-    const user = await User.findById(req.user._id).select("+password");
-
-    //check if the supplied current password is correct
-    if(!(await user.comparePasswordInDb(req.body.currentPassword, user.password))){
-        return next(new CustomError("The current password you provided is wrong", 401));
-    }
-
-    // If supplied password is correct, update user password with new value
-    user.password = req.body.password;
-    user.confirmPassword = req.body.confirmPassword;
-    await user.save()
-
-    // login user & send JWT
-    createSendResponse(user, 200, res)
-})
-
-
-
-
